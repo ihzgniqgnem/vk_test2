@@ -1,0 +1,17 @@
+/x64/
+/x86/
+*.obj
+*.pdb
+*.iobj
+*.ipdb
+*.recipe
+*.tlog
+*.lastbuildstate
+*.log
+*.dll
+*.lib
+*.a
+*.o
+*.so
+*.exe
+*.dylib
