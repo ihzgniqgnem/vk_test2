@@ -1,17 +1,7 @@
-/x64/
-/x86/
-*.obj
-*.pdb
-*.iobj
-*.ipdb
-*.recipe
-*.tlog
-*.lastbuildstate
-*.log
-*.dll
-*.lib
-*.a
+```
+# Compiled and build artifacts
 *.o
-*.so
-*.exe
-*.dylib
+*.obj
+*.out
+test_named_array
+```
