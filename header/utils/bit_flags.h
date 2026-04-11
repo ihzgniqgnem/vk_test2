@@ -16,7 +16,7 @@ namespace vkm_impl::utils::BitFlags {
 		uint8_t index;
 		template<typename T>
 			requires is_enum_class_v<T>&& requires{T::FlagMax;} && ((size_t)T::FlagMax > 0)
-		friend class BitFlags;
+		friend class vkm::utils::BitFlags;
 		template<size_t>
 		friend class ProxyArray;
 		constexpr Proxy(uint8_t& raw_data, uint8_t index) :raw_data(&raw_data), index(index){}
@@ -30,7 +30,7 @@ namespace vkm_impl::utils::BitFlags {
 			return (*raw_data >> index) & 1u;
 		}
 		constexpr bool operator=(bool other) noexcept {
-			*raw_data = *raw_data & ~(1u << index) | (other << index);
+			*raw_data = (*raw_data & ~(1u << index)) | (other << index);
 			return other;
 		}
 	};
@@ -39,7 +39,7 @@ namespace vkm_impl::utils::BitFlags {
 		bool data[l];
 		template<typename T>
 			requires is_enum_class_v<T>&& requires{T::FlagMax;} && ((size_t)T::FlagMax > 0)
-		friend class BitFlags;
+		friend class vkm::utils::BitFlags;
 		template<size_t>
 		friend class ProxyArray;
 		constexpr BoolArray() noexcept = default;
@@ -66,7 +66,8 @@ namespace vkm_impl::utils::BitFlags {
 		Proxy data[l];
 		template<typename T>
 			requires is_enum_class_v<T>&& requires{T::FlagMax;} && ((size_t)T::FlagMax > 0)
-		friend class BitFlags;
+		friend class vkm::utils::BitFlags;
+		ProxyArray()=default;
 	public:
 		template<size_t index>
 		constexpr Proxy get() noexcept {
@@ -97,6 +98,7 @@ namespace vkm_impl::utils::BitFlags {
 			}
 			return *this;
 		}
+		ProxyArray(const ProxyArray<l>& other) noexcept = default;
 		constexpr auto& operator=(const ProxyArray<l>& other) noexcept {
 			auto temp_other = (BoolArray<l>)other;
 			for (size_t i = 0;i < l;i++) {
@@ -130,9 +132,9 @@ namespace vkm::utils {
 		template<typename>
 		friend struct std::hash;
 	public:
-		constexpr BitFlags<T>() noexcept = default;
-		constexpr BitFlags<T>(const BitFlags<T>&) = default;
-		constexpr BitFlags<T>(BitFlags<T>&&) = default;
+		constexpr BitFlags() noexcept = default;
+		constexpr BitFlags(const BitFlags<T>&) = default;
+		constexpr BitFlags(BitFlags<T>&&) = default;
 		constexpr BitFlags& operator=(const BitFlags<T>&) = default;
 		constexpr BitFlags& operator=(BitFlags<T>&&) = default;
 		constexpr bool operator[](const T enum_index) const noexcept {

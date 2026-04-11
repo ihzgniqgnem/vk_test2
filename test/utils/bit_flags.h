@@ -11,7 +11,7 @@ namespace vkm_test::utils {
 			FlagMax
 		};
 		vkm::utils::BitFlags<FlagIndex> x;
-		EXPECT_EQ(sizeof(x), 1);
+		EXPECT_EQ(sizeof(x), 1u);
 	}
 	TEST(BitFlags, big_flag)
 	{
@@ -19,7 +19,7 @@ namespace vkm_test::utils {
 			FlagMax = 10000
 		};
 		vkm::utils::BitFlags<FlagIndex> x;
-		EXPECT_EQ(sizeof(x), 1250);
+		EXPECT_EQ(sizeof(x), 1250u);
 	}
 	TEST(BitFlags, init) {
 		enum class FlagIndex {
