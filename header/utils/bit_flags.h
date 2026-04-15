@@ -113,7 +113,7 @@ namespace vkm_impl::utils::BitFlags {
 			}
 			return res;
 		}
-		constexpr bool eq(const BoolArray<l>& other) const noexcept {
+		constexpr bool operator==(const BoolArray<l>& other) const noexcept {
 			for (size_t i = 0;i < l;i++) {
 				if (data[i] != other.data[i])return false;
 			}

@@ -3,6 +3,7 @@
 #include "../header/static_assertions.h"
 
 #include "./utils/bit_flags.h"
+#include "./utils/named_array.h"
 
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);

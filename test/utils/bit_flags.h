@@ -3,7 +3,7 @@
 
 #include <gtest/gtest.h>
 #include "../../header/utils/bit_flags.h"
-namespace vkm_test::utils {
+namespace vkm_test::utils::BitFlags {
 	TEST(BitFlags, small_flag)
 	{
 		enum class FlagIndex {
