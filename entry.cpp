@@ -1,5 +1,5 @@
 #ifndef ENABLE_TEST
-#define ENABLE_TEST 1
+#define ENABLE_TEST 0
 #endif
 #if ENABLE_TEST
 #undef ENABLE_TEST

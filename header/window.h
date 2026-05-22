@@ -1,12 +1,19 @@
+// TODO: 可以实现一个指令缓冲，对于需要向系统进行调用的set统一留到update时去重生效
+// TODO: 应该传入Instance对象，自动创建表面
+// TODO: 实现Builder模式，允许Window.build.setXxx().build()和Window.Builder{}.setXxx().build()
+
+
 #pragma once
 #include <cstdint>
 #include <cassert>
 #include <array>
+#include <string>
 #include <vulkan/vulkan.h>
 #include <glfw/glfw3.h>
 
 #include "./size2d.h"
 #include "./utils/bit_flags.h"
+#include "./utils/func_table.h"
 
 namespace vkm {
 	class Window {
@@ -23,12 +30,38 @@ namespace vkm {
 		uint32_t monitor_index = 0;
 		std::string title="";
 		GLFWwindow* handle;
-		Window() noexcept = default;
+		constexpr Window() noexcept = default;
 		friend class Instance;
+		class Builder{
+		private:
+			class Helper{
+			public:
+#define VKM_WINDOW_BUILDER_HELPER_WRAPPER(name) \
+				template <typename... Args> \
+				static Builder name(Args&&... args) noexcept(noexcept(Builder{}.name(std::declval<Args>()...))) {\
+					Builder tmp;\
+					tmp.name(std::forward<Args>(args)...);\
+					return tmp;\
+				}
+#undef VKM_WINDOW_BUILDER_HELPER_WRAPPER
+				static Window build() noexcept {
+					return Builder::build();
+				}
+			};
+			friend class Window;
+		public:
+			constexpr Builder() noexcept = default;
+			static Window build() noexcept{
+				Window self;
+				self.handle=glfwCreateWindow(0,0,"",nullptr,nullptr);
+				glfwSetWindowUserPointer(self.handle, &self);
+				return self;
+			}
+		};
 	public:
-
+		static Builder::Helper build;
 		void set_fullscreen() {
-			if (flags[{FlagIndex::Fullscreen, FlagIndex::Exclusive}].eq({ true,false })) {
+			if (flags[{FlagIndex::Fullscreen, FlagIndex::Exclusive}] == std::array{ true,false }) {
 				return;
 			}
 			flags[{FlagIndex::Fullscreen, FlagIndex::Exclusive}] = { true,false };
@@ -40,7 +73,7 @@ namespace vkm {
 		}
 
 		void set_fullscreen_exclusive(uint32_t monitor_index) {
-			if (flags[{FlagIndex::Fullscreen, FlagIndex::Exclusive}].eq({ true,true }) &&
+			if (flags[{FlagIndex::Fullscreen, FlagIndex::Exclusive}] == std::array{ true,true } &&
 				this->monitor_index == monitor_index) {
 				return;
 			}
@@ -61,8 +94,7 @@ namespace vkm {
 			if (!flags[FlagIndex::Fullscreen] && window_size == size && window_pos == pos) {
 				return;
 			}
-			flags[FlagIndex::Fullscreen] = false;
-			flags[FlagIndex::Exclusive] = false;
+			flags[{FlagIndex::Fullscreen,FlagIndex::Exclusive}] = {false,false};
 
 			window_size = size;
 			window_pos = pos;
@@ -125,23 +157,28 @@ namespace vkm {
 			destroy();
 		}
 	public:
-		enum class CallbackType:uint32_t {
+		enum class CallbackIndex:uint32_t {
 			FramebufferSize,
 			WindowSize,
 			Close,
-			CallbackMax
+			FuncMax
 		};
 	private:
-		std::array<void*, (uint32_t)CallbackType::CallbackMax> callbacks;
+		using CallbackType = vkm::utils::FuncTableType<
+			void(*)(Window&, Size2D), // FramebufferSize
+			void(*)(Window&, Size2D), // WindowSize
+			bool(*)(Window&) // Close
+		>;
+		vkm::utils::FuncTable<CallbackIndex,CallbackType> callbacks;
 	public:
-		constexpr void set_callback(CallbackType type, void* callback) noexcept {
-			callbacks[(uint32_t)type] = callback;
+		constexpr void set_callback(CallbackIndex index, void* callback) noexcept {
+			callbacks[index] = callback;
 		}
 	public:
 		static void framebufferSizeCallback(GLFWwindow* window, int width, int height) {
 			Window& self = *(Window*)glfwGetWindowUserPointer(window);
 			self.framebuffer_size = { (uint32_t)width,(uint32_t)height };
-			auto userFramebufferSizeCallback = static_cast<void(*)(Window&, Size2D)>(self.callbacks[(uint32_t)CallbackType::FramebufferSize]);
+			auto userFramebufferSizeCallback = self.callbacks.get<CallbackIndex::FramebufferSize>();
 			if (userFramebufferSizeCallback) {
 				userFramebufferSizeCallback(self, self.framebuffer_size);
 			}
@@ -149,18 +186,18 @@ namespace vkm {
 		static void windowSizeCallback(GLFWwindow* window, int width, int height) {
 			Window& self = *(Window*)glfwGetWindowUserPointer(window);
 			self.window_size = { (uint32_t)width,(uint32_t)height };
-			auto userWindowSizeCallback = static_cast<void(*)(Window&, Size2D)>(self.callbacks[(uint32_t)CallbackType::WindowSize]);
+			auto userWindowSizeCallback = self.callbacks.get<CallbackIndex::WindowSize>();
 			if (userWindowSizeCallback) {
 				userWindowSizeCallback(self, self.window_size);
 			}
 		}
 		static void windowCloseCallback(GLFWwindow* window) {
 			Window& self = *(Window*)glfwGetWindowUserPointer(window);
-			auto userCloseCallback = static_cast<bool(*)(Window&)>(self.callbacks[(uint32_t)CallbackType::Close]);
+			auto userCloseCallback = self.callbacks.get<CallbackIndex::Close>();
 			if (userCloseCallback && !userCloseCallback(self)) {
 				glfwSetWindowShouldClose(window, false);
 			}else {
-				self.~Window();
+				self.destroy();
 			}
 		}
 	};

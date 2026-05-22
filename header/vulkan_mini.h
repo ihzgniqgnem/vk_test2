@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <glfw/glfw3.h>
 
-namespace vkm_impl{
+namespace vkm_impl {
 	class InitHelper {
 	public:
 		InitHelper() {

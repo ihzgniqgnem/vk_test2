@@ -1,3 +1,13 @@
+/** 
+ * @file bit_flags.h
+ * @brief 命名的BitSet
+ * 支持批量操作
+ * @author ihzgniqgnem
+ * @todo 添加ControlBlock版和Heap版的BitFlags，解决移动使Proxy失效的问题
+ * @todo 添加Stack、ControlBlock版和Heap版的ThreadSafe版
+ * @todo 添加Debug版本，对Stack版移动却继续使用Proxy检测，对销毁后继续使用Proxy的检测
+ * @todo 改进ProxyArray的常数，实现环检测
+ */
 #pragma once
 #include <type_traits>
 #include <cstring>
@@ -116,6 +126,14 @@ namespace vkm_impl::utils::BitFlags {
 		constexpr bool operator==(const BoolArray<l>& other) const noexcept {
 			for (size_t i = 0;i < l;i++) {
 				if (data[i] != other.data[i])return false;
+			}
+			return true;
+		}
+		template<typename T>
+		constexpr bool operator==(const T& other) const noexcept {
+			assert(l == other.size());
+			for (size_t i = 0;i < l;i++) {
+				if (data[i] != other[i])return false;
 			}
 			return true;
 		}

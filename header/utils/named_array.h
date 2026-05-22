@@ -7,18 +7,26 @@
 #include "hash_combine.h"
 
 namespace vkm::utils {
-	template<typename T, typename U>
-		requires is_enum_class_v<T>&& requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
+	template<typename T,typename U>
+		requires is_enum_class_v<T> && requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
 	class NamedArray;
 }
 
 namespace vkm_impl::utils::NamedArray {
 	using namespace vkm::utils;
+	template<typename U,size_t p>
+	constexpr size_t ArrayMax(){
+		if constexpr (p==0){
+			return static_cast<size_t>(U::ArrayMax);
+		}else {
+			return p;
+		}
+	} 
 	template<size_t l,typename U>
 	class ProxyArray {
 		U* data[l];
-		template<typename T, typename P>
-			requires is_enum_class_v<T>&& requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
+		template<typename T,typename F>
+			requires is_enum_class_v<T> && requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
 		friend class vkm::utils::NamedArray;
 		constexpr ProxyArray() noexcept = default;
 	public:
@@ -67,18 +75,27 @@ namespace vkm_impl::utils::NamedArray {
 }
 namespace vkm::utils {
 	template<typename T,typename U>
-		requires is_enum_class_v<T>&& requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
+		requires is_enum_class_v<T> && requires{T::ArrayMax;} && ((size_t)T::ArrayMax > 0)
 	class NamedArray {
 		using P = std::underlying_type_t<T>;
 		static constexpr size_t data_length = (size_t)T::ArrayMax;
 		U data[data_length] = {};
-		friend struct std::hash<NamedArray<T,U>>;
+		template<typename>
+		friend struct std::hash;
 	public:
 		constexpr NamedArray() noexcept = default;
 		constexpr NamedArray(const NamedArray<T, U>&) = default;
 		constexpr NamedArray(NamedArray<T, U>&&) = default;
 		constexpr NamedArray<T, U>& operator=(const NamedArray<T, U>&) = default;
 		constexpr NamedArray<T, U>& operator=(NamedArray<T, U>&&) = default;
+		template <size_t index>
+		constexpr U& get() noexcept{
+			return data[index];
+		}
+		template <size_t index>
+		constexpr const U& get() const noexcept{
+			return data[index];
+		}
 		constexpr U& operator[](const T enum_index) noexcept {
 			return data[static_cast<P>(enum_index)];
 		}
@@ -147,7 +164,6 @@ namespace std {
 	template <typename T,typename U>
 	struct hash<vkm::utils::NamedArray<T,U>> {
 	private:
-		static constexpr auto U_hash = std::hash<U>{};
 		template<size_t... Is>
 		static constexpr auto helper(const vkm::utils::NamedArray<T, U>& array,std::index_sequence<Is...>) noexcept {
 			return vkm::utils::hashCombine(array[static_cast<T>(Is)]...);

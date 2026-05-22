@@ -4,6 +4,7 @@
 
 #include "./utils/bit_flags.h"
 #include "./utils/named_array.h"
+#include "./utils/func_table.h"
 
 int main(int argc, char** argv) {
 	::testing::InitGoogleTest(&argc, argv);
